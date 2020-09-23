@@ -5,12 +5,6 @@ import zlib
 from DataTypes import *
 import csv
 
-#Dependencies:
-# zlib
-# https://www.zlib.net/ 
-#
-#Tested on Ubuntu 18.04
-
 if len(sys.argv) != 2:
     print("Syntax: python3 decodeBPString.py stringfilename")
     exit()
