@@ -1,5 +1,216 @@
-## This first set of classes describes blueprint objects described here:
 # https://wiki.factorio.com/Blueprint_string_format
+# https://lua-api.factorio.com/latest/Concepts.html
+import json
+import base64
+import zlib
+import csv
+
+##############################
+# Main program functionality #
+##############################
+class Blueprinter:
+    def __init__(self, inputStrFile=None, inputCSVFile=None):
+        self.inputStrFile = inputStrFile
+        self.inputCSVFile = inputCSVFile
+
+        if inputStrFile is not None:
+            self.openFromStrFile()
+        else:
+            self.openFromCSV()
+
+
+    def openFromStrFile(self):
+        with open(self.inputStrFile, "r") as f:
+            txt = f.read()
+        
+        bpjson = base64.b64decode(txt[1:])
+        bpjson = zlib.decompress(bpjson)
+        
+        bpjson = json.loads(bpjson)
+        
+        
+        if "blueprint" not in bpjson:
+            print("Invalid JSON format: expected upper level 'blueprint' string to be found (mods may change)")
+            exit(1)
+        
+        
+        # Metadata
+        if "item" in bpjson["blueprint"]:
+            self.bpItem = bpjson["blueprint"]["item"]
+        else:
+            self.bpItem = "blueprint"
+        
+        if "label" in bpjson["blueprint"]:
+            self.bpName = bpjson["blueprint"]["label"]  # overwrites above
+        else:
+            self.bpName = "blueprint"
+        
+        if "label_color" in bpjson["blueprint"]:
+            #bpColor is tuple (r,g,b, a)
+            self.bpColor = Color(dic=bpjson["blueprint"]["label_color"])
+        else:
+            self.bpColor = Color(r=255,g=255,b=255, a=255)
+        
+        if "version" in bpjson["blueprint"]:
+            self.mapVersion = int(bpjson["blueprint"]["version"])
+        else:
+            self.mapVersion = 0
+        
+        # Lists of data
+        self.entities = []
+        if "entities" in bpjson["blueprint"]:
+            entitiesJson = bpjson["blueprint"]["entities"]
+            for entity in entitiesJson:
+                self.entities.append(Entity(entity))
+        
+        self.tiles = []
+        if "tiles" in bpjson["blueprint"]:
+            tilesJson = bpjson["blueprint"]["tiles"]
+            for tile in tilesJson:
+                self.tiles.append(Tile(tile))
+        
+        self.icons = []
+        if "icons" in bpjson["blueprint"]:
+            iconsJson = bpjson["blueprint"]["icons"]
+            for icon in iconsJson:
+                self.icons.append(Icon(icon))
+        
+        self.schedules = []
+        if "schedules" in bpjson["blueprint"]:
+            schedulesJson = bpjson["blueprint"]["schedules"]
+            for schedule in schedulesJson:
+                self.schedules.append(Schedule(schedule))
+        
+    def openFromCSV(self):
+        pass
+
+    def toCSV(self, outFile=None):
+        if not outFile:
+            outFile = self.outFile
+        with open(outFile, "w", newline='') as csvfile:
+            # this csv will have quotes around every field
+            writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        
+            if self.entities:
+                writer.writerow(["Entities"])
+                writer.writerow([Blueprinter.spaceout(e.dict()) for e in self.entities])
+                #writer.writerow([a for a in self.entities[0].__dict__])
+                #for e in self.entities:
+                #    writer.writerow([a for a in e.__dict__.values()])
+            if self.tiles:
+                writer.writerow(["Tiles"])
+                writer.writerow([a for a in self.tiles[0].__dict__])
+                for t in self.tiles:
+                    writer.writerow([a for a in t.__dict__.values()])
+            if self.icons:
+                writer.writerow(["Icons"])
+                writer.writerow([a for a in self.tiles[0].__dict__])
+                writer.writerow([a for a in self.icons[0].__dict__])
+                for i in self.icons:
+                    writer.writerow([a for a in i.__dict__.values()])
+        
+            if self.schedules:
+                writer.writerow(["Schedules"])
+                writer.writerow([a for a in self.schedules[0].__dict__])
+                for s in self.schedules:
+                    writer.writerow([a for a in s.__dict__.values()])
+
+    def toStrFile(self, outFile=None):
+        if not outFile:
+            outFile = self.outFile
+
+        with open(outFile, "w") as f:
+            res = {}
+            res["blueprint"] = {}
+        
+            #write metadata
+            res["blueprint"]["item"] = self.bpItem
+            res["blueprint"]["label"] = self.bpName
+            res["blueprint"]["label_color"] = Blueprinter.toDict(self.bpColor)
+            res["blueprint"]["version"] = self.mapVersion
+            #write data lists 
+            if self.entities:
+               res["blueprint"]["entities"] = [Blueprinter.toDict(e) for e in self.entities]
+            if self.tiles:
+               res["blueprint"]["tiles"] = [Blueprinter.toDict(t) for t in self.tiles]
+            if self.icons:
+               res["blueprint"]["icons"] = [Blueprinter.toDict(e) for e in self.icons]
+            if self.schedules:
+                res["blueprint"]["schedules"] = [Blueprinter.toDict(e) for e in self.schedules]
+        
+            # convert to json
+            resjson = json.dumps(res)
+            # compress
+            compressed_res = zlib.compress(bytes(resjson, 'utf-8'))
+            #encode base 64
+            f.write("0"+base64.b64encode(compressed_res).decode('utf-8'))
+
+    # This can be called on any object
+    # if called on a custom object it calls object.dict()
+    # else it tries to iterate through the object and call itself recursively on it's children
+    @staticmethod
+    def toDict(obj):
+        try:
+            return obj.dict()  # object is a custom class with the dict field
+        except:
+            if isinstance(obj, dict):  # object is a dictionary. Let's reconstruct it and call dict() on it's children
+                res = {}
+                for k,v in obj.items():
+                    try:
+                        res[k] = toDict(v)
+                    except:
+                        res[k] = v
+                return res
+            elif isinstance(obj, list) or isinstance(obj, tuple):
+                res = []
+                for v in obj:
+                    try:
+                        res.append(toDict(v))
+                    except:
+                        res.append(v)
+                return res
+            else:  # must be a primitive type, leave as is
+                return obj
+
+    @staticmethod
+    def spaceout(obj):
+        res = ""
+        inString = False
+        numTabs = 0
+        operators = [ "+", "=", ":", "/", "*"]  # not doing hyphen. negative numbers and variable names don't want it spaced
+
+        for c in str(obj):
+            if c == "'":  # strings are single quote
+                inString = not inString
+
+            if inString:
+                res += c
+            else:
+                if c == ")" or c == "]" or c == "}":
+                    res += "\n"
+                    numTabs -= 1
+                    res += "\t"*numTabs
+
+                if c in operators:
+                    res += " " + c + " "
+                elif c != " " and c != "\n" and c != "\t":  # ignore formatting
+                    res += c
+
+                if c == "(" or c == "[" or c == "{":
+                    res += "\n"
+                    numTabs += 1
+                    res += "\t"*numTabs
+                if c == ",":
+                    res += "\n"
+                    res += "\t"*numTabs
+        return res
+
+
+#############################
+# Factorio JSON Class Def's #
+#############################
+# Class/Field names correlate with https://wiki.factorio.com/Blueprint_string_format)
+# Notable exceptions include the control_behavior and connection objects.
 
 class Icon:
     def __init__(self, dic):
@@ -9,6 +220,12 @@ class Icon:
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
 
 class SignalID:
     def __init__(self, dic):
@@ -18,6 +235,12 @@ class SignalID:
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
 
 
 class Entity:
@@ -135,6 +358,12 @@ class Entity:
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
 
 class Inventory:
     def __init__(self, dic):
@@ -144,6 +373,12 @@ class Inventory:
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
 
 class Schedule:
     def __init__(self, dic):
@@ -153,6 +388,12 @@ class Schedule:
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
     
 class ScheduleRecord:
     def __init__(self, dic):
@@ -162,6 +403,12 @@ class ScheduleRecord:
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
 
 class WaitCondition:
     def __init__(self, dic):
@@ -173,6 +420,12 @@ class WaitCondition:
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
 
 class Tile:
     def __init__(self, dic):
@@ -182,6 +435,14 @@ class Tile:
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
+
+
 
 
 class Position:
@@ -191,6 +452,12 @@ class Position:
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
 
 class ControlBehavior:  # not documented properly, here are the subclass' definitions: https://lua-api.factorio.com/latest/Concepts.html#Signal
     class ConstantCombinatorParameters:
@@ -211,6 +478,12 @@ class ControlBehavior:  # not documented properly, here are the subclass' defini
             return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
         def __repr__(self):
             return self.__str__()
+        def dict(self):
+            d = {}
+            for attr,val in self.__dict__.items():
+                if val is not None:
+                    d[attr] = Blueprinter.toDict(val)
+            return d
     class DeciderCombinatorParameters:
         def __init__(self, dic):
             if "first_signal" in dic:
@@ -241,6 +514,12 @@ class ControlBehavior:  # not documented properly, here are the subclass' defini
             return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
         def __repr__(self):
             return self.__str__()
+        def dict(self):
+            d = {}
+            for attr,val in self.__dict__.items():
+                if val is not None:
+                    d[attr] = Blueprinter.toDict(val)
+            return d
     class ArithmeticCombinatorParameters:
         def __init__(self, dic):
             if "first_signal" in dic:
@@ -271,6 +550,12 @@ class ControlBehavior:  # not documented properly, here are the subclass' defini
             return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
         def __repr__(self):
             return self.__str__()
+        def dict(self):
+            d = {}
+            for attr,val in self.__dict__.items():
+                if val is not None:
+                    d[attr] = Blueprinter.toDict(val)
+            return d
 
     def __init__(self, dic):  # ControlBehavior constructor
         if "filters" in dic:  # for some reason, this is called filters but it deals with constant combinators
@@ -289,6 +574,12 @@ class ControlBehavior:  # not documented properly, here are the subclass' defini
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
 
 class Connection:
     def __init__(self, dic):
@@ -299,11 +590,17 @@ class Connection:
         if "2" in dic:
             self._2 = ConnectionPoint(dic["2"])
         else:
-            self._1 = None
+            self._2 = None
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr[1:]] = Blueprinter.toDict(val)  # customized due to only _# attributes in this class
+        return d
 
 class ConnectionPoint:
     def __init__(self, dic):
@@ -320,6 +617,12 @@ class ConnectionPoint:
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
 
 class ConnectionData:
     def __init__(self, dic):
@@ -335,6 +638,12 @@ class ConnectionData:
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
 
 class ItemFilter:
     def __init__(self, dic):
@@ -343,6 +652,12 @@ class ItemFilter:
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
 
 class InfinitySettings:
     def __init__(self, dic):
@@ -352,6 +667,12 @@ class InfinitySettings:
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
 
 class InfinityFilter:
     def __init__(self, dic):
@@ -363,6 +684,12 @@ class InfinityFilter:
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
 
 class LogisticFilter:
     def __init__(self, dic):
@@ -373,6 +700,12 @@ class LogisticFilter:
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
 
 class SpeakerParameter:
     def __init__(self, dic):
@@ -383,6 +716,12 @@ class SpeakerParameter:
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
 
 class SpeakerAlertParameter:
     def __init__(self, dic):
@@ -394,6 +733,12 @@ class SpeakerAlertParameter:
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
 
 class Color:
     def __init__(self, dic=None, r=None, g=None, b=None, a=None):
@@ -401,25 +746,14 @@ class Color:
             self.r, self.g, self.b, self.a = [int(255*float(i)) for i in dic.values()]
         else:
             self.r, self.g, self.b, self.a = r, g, b, a
-
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
-
-    def tofacDict(self):
-        res = {}
-        res["r"] = "{:04f}".format(self.r/255)
-        res["g"] = "{:04f}".format(self.g/255)
-        res["b"] = "{:04f}".format(self.b/255)
-        res["a"] = "{:04f}".format(self.a/255)
-        return res
-
-## Below classes describe factorio lua concepts described here:
-# https://lua-api.factorio.com/latest/Concepts.html
-
-class CircuitCondition:
-    def __init__(self, dic):
-        for i in dic.items():
-            print(i)
+    def dict(self):
+        d = {}
+        for attr,val in self.__dict__.items():
+            if val is not None:
+                d[attr] = Blueprinter.toDict(val)
+        return d
 
