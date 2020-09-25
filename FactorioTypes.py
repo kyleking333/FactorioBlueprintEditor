@@ -15,9 +15,29 @@ class Blueprinter:
 
         if inputStrFile is not None:
             self.fromStrFile()
-        else:
+        elif inputCSVFile:
             self.fromCSV()
+        else:
+            self.bpItem = "blueprint"
+            self.bpName = "blueprint"
+            self.bpColor = Color(r=255,g=255,b=255, a=255)
+            self.mapVersion = None
 
+            self.currPosition = Position()
+            self.currPosition.x = 0
+            self.currPosition.y = 0
+
+            self.numEntities = 0
+            self.entities = []
+
+            self.numTiles = 0
+            self.tiles = []
+
+            self.numIcons = 0
+            self.icons = []
+
+            self.numSchedules= 0
+            self.schedules = []
 
     def fromStrFile(self, inputStrFile=None):
         if not inputStrFile:
@@ -248,9 +268,17 @@ class Blueprinter:
 # Notable exceptions include the control_behavior and connection objects.
 
 class Icon:
-    def __init__(self, dic):
-        self.index = int(dic["index"])
-        self.signal = SignalID(dic["signal"])
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
+        if "index" in dic:
+            self.index = int(dic["index"])
+        else:
+            self.index = None
+        if "signal" in dic:
+            self.signal = SignalID(dic["signal"])
+        else:
+            self.signal = None
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
@@ -263,9 +291,17 @@ class Icon:
         return d
 
 class SignalID:
-    def __init__(self, dic):
-        self.name = dic["name"]
-        self.type = dic["type"]
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
+        if "name" in dic:
+            self.name = dic["name"]
+        else:
+            self.name = None
+        if "type" in dic:
+            self.type = dic["type"]
+        else:
+            self.type = None
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
@@ -279,10 +315,21 @@ class SignalID:
 
 
 class Entity:
-    def __init__(self, dic):
-        self.entity_number       = int(dic["entity_number"])
-        self.name                = dic["name"]
-        self.position            = Position(dic["position"])
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
+        if "entity_number" in dic:
+            self.entity_number       = int(dic["entity_number"])
+        else:
+            self.entity_number = None
+        if "name" in dic:
+            self.name                = dic["name"]
+        else:
+            self.name =  None
+        if "position" in dic:
+            self.position            = Position(dic["position"])
+        else:
+            self.position = None
 
         if "direction" in dic:
             self.direction           = int(dic["direction"])
@@ -401,9 +448,17 @@ class Entity:
         return d
 
 class Inventory:
-    def __init__(self, dic):
-        self.filters = [ItemFilter(a) for a in dic["filters"]]
-        self.bar = int(dic["bar"])
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
+        if "filters" in dic:
+            self.filters = [ItemFilter(a) for a in dic["filters"]]
+        else:
+            self.filters = None
+        if "bar" in dic:
+            self.bar = int(dic["bar"])
+        else:
+            self.bar = None
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
@@ -416,9 +471,17 @@ class Inventory:
         return d
 
 class Schedule:
-    def __init__(self, dic):
-        self.schedule = [ScheduleRecord(a) for a in dic["schedule"]]
-        self.locomotives = [int(trainEntityNumer) for trainEntityNumber in dic["locomotives"]]
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
+        if "schedule" in dic:
+            self.schedule = [ScheduleRecord(a) for a in dic["schedule"]]
+        else:
+            self.schedule = None
+        if "locomotives" in dic:
+            self.locomotives = [int(trainEntityNumer) for trainEntityNumber in dic["locomotives"]]
+        else:
+            self.locomotives = None
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
@@ -431,9 +494,17 @@ class Schedule:
         return d
     
 class ScheduleRecord:
-    def __init__(self, dic):
-        self.station = dic["station"]
-        self.wait_conditions = [WaitCondition(a) for a in dic["wait_conditions"]]
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
+        if "station" in dic:
+            self.station = dic["station"]
+        else:
+            self.station = None
+        if "wait_conditions" in dic:
+            self.wait_conditions = [WaitCondition(a) for a in dic["wait_conditions"]]
+        else:
+            self.wait_conditions = None
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
@@ -446,11 +517,26 @@ class ScheduleRecord:
         return d
 
 class WaitCondition:
-    def __init__(self, dic):
-        self.type = dic["type"]
-        self.compare_type = dic["compare_type"]
-        self.ticks = int(dic["ticks"])
-        self.condition = CircuitCondition(dic["condition"])
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
+
+        if "type" in dic:
+            self.type = dic["type"]
+        else:
+            self.type = None
+        if "compare_type" in dic:
+            self.compare_type = dic["compare_type"]
+        else:
+            self.compare_type = None
+        if "ticks" in dic:
+            self.ticks = int(dic["ticks"])
+        else:
+            self.ticks = None
+        if "condition" in dic:
+            self.condition = CircuitCondition(dic["condition"])
+        else:
+            self.condition = None
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
@@ -463,9 +549,17 @@ class WaitCondition:
         return d
 
 class Tile:
-    def __init__(self, dic):
-        self.name = dic["name"]
-        self.position = Position(dic["position"])
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
+        if "name" in dic:
+        	self.name = dic["name"]
+        else:
+            self.name = None
+        if "position" in dic:
+        	self.position = Position(dic["position"])
+        else:
+            self.position = None
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
@@ -481,8 +575,21 @@ class Tile:
 
 
 class Position:
-    def __init__(self, dic):
-        self.x, self.y = [float(a) for a in dic.values()]
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
+        if "x" in dic:
+            self.x = dic["x"]
+        else:
+            self.x = None
+        if "y" in dic:
+            self.y = dic["y"]
+        else:
+            self.y = None
+    def __add__(self, other):  # may come in handy
+        if isinstance(other, tuple) and len(other)==2:
+            self.x += other[0]
+            self.y += other[1]
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
@@ -496,7 +603,9 @@ class Position:
 
 class ControlBehavior:  # not documented properly, here are the subclass' definitions: https://lua-api.factorio.com/latest/Concepts.html#Signal
     class ConstantCombinatorParameters:
-        def __init__(self, dic):
+        def __init__(self, dic=None):
+            if not dic:
+                dic = {}
             if "signal" in dic:
                 self.signal = SignalID(dic["signal"])
             else:
@@ -520,7 +629,9 @@ class ControlBehavior:  # not documented properly, here are the subclass' defini
                     d[attr] = Blueprinter.toDict(val)
             return d
     class DeciderCombinatorParameters:
-        def __init__(self, dic):
+        def __init__(self, dic=None):
+            if not dic:
+                dic = {}
             if "first_signal" in dic:
                 self.first_signal = SignalID(dic["first_signal"])
             else:
@@ -556,7 +667,9 @@ class ControlBehavior:  # not documented properly, here are the subclass' defini
                     d[attr] = Blueprinter.toDict(val)
             return d
     class ArithmeticCombinatorParameters:
-        def __init__(self, dic):
+        def __init__(self, dic=None):
+            if not dic:
+                dic = {}
             if "first_signal" in dic:
                 self.first_signal = SignalID(dic["first_signal"])
             else:
@@ -592,7 +705,9 @@ class ControlBehavior:  # not documented properly, here are the subclass' defini
                     d[attr] = Blueprinter.toDict(val)
             return d
 
-    def __init__(self, dic):  # ControlBehavior constructor
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}  # ControlBehavior constructor
         if "filters" in dic:  # for some reason, this is called filters but it deals with constant combinators
             self.filters = [self.ConstantCombinatorParameters(a) for a in dic["filters"]]
         else:
@@ -617,7 +732,9 @@ class ControlBehavior:  # not documented properly, here are the subclass' defini
         return d
 
 class Connection:
-    def __init__(self, dic):
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
         if "1" in dic:
             self._1 = ConnectionPoint(dic["1"])
         else:
@@ -638,7 +755,9 @@ class Connection:
         return d
 
 class ConnectionPoint:
-    def __init__(self, dic):
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
         if "red" in dic:
             self.red   = [ConnectionData(a) for a in dic["red"]]
         else:
@@ -660,7 +779,9 @@ class ConnectionPoint:
         return d
 
 class ConnectionData:
-    def __init__(self, dic):
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
         if "entity_id" in dic:
             self.entity_id   = int(dic["entity_id"])
         else:
@@ -681,9 +802,17 @@ class ConnectionData:
         return d
 
 class ItemFilter:
-    def __init__(self, dic):
-        self.name = dic["name"]
-        self.index = int(dic["index"])
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
+        if "name" in dic:
+        	self.name = dic["name"]
+        else:
+            self.name = None
+        if "index" in dic:
+        	self.index = int(dic["index"])
+        else:
+            self.index = None
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
         return self.__str__()
@@ -695,9 +824,17 @@ class ItemFilter:
         return d
 
 class InfinitySettings:
-    def __init__(self, dic):
-        self.remove_unfiltered_items = True if dic["remove_unfiltered_items"]=="true" else False
-        self.filters = [InfinityFilter(a) for a in dic["filters"]]
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
+        if "remove_unfiltered_items" in dic:
+            self.remove_unfiltered_items = True if dic["remove_unfiltered_items"]=="true" else False
+        else:
+            self.remove_unfiltered_items = None
+        if "filters" in dic:
+        	self.filters = [InfinityFilter(a) for a in dic["filters"]]
+        else:
+            self.filters = None
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
@@ -710,11 +847,25 @@ class InfinitySettings:
         return d
 
 class InfinityFilter:
-    def __init__(self, dic):
-        self.name = dic["name"]
-        self.count = int(dic["count"])
-        self.mode = dic["mode"]
-        self.index = int(dic["index"])
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
+        if "name" in dic:
+            self.name = dic["name"]
+        else:
+            self.name = None
+        if "count" in dic:
+            self.count = int(dic["count"])
+        else:
+            self.count = None
+        if "mode" in dic:
+            self.mode = dic["mode"]
+        else:
+            self.mode = None
+        if "index" in dic:
+            self.index = int(dic["index"])
+        else:
+            self.index = None
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
@@ -727,10 +878,21 @@ class InfinityFilter:
         return d
 
 class LogisticFilter:
-    def __init__(self, dic):
-        self.name = dic["name"]
-        self.index = int(dic["index"])
-        self.count = int(dic["count"])
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
+        if "name" in dic:
+            self.name = dic["name"]
+        else:
+            self.name = None
+        if "index" in dic:
+            self.index = int(dic["index"])
+        else:
+            self.index = None
+        if "count" in dic:
+            self.count = int(dic["count"])
+        else:
+            self.count = None
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
@@ -743,10 +905,21 @@ class LogisticFilter:
         return d
 
 class SpeakerParameter:
-    def __init__(self, dic):
-        self.playback_volume = float(dic["playback_volume"])
-        self.playback_globally = True if dic["playback_globally"]=="true" else False
-        self.allow_polyphany = True if dic["allow_polyphany"]=="true" else False
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
+        if "playback_volume" in dic:
+        	self.playback_volume = float(dic["playback_volume"])
+        else:
+            self.playback_volume = None
+        if "playback_globally" in dic:
+        	self.playback_globally = True if dic["playback_globally"]=="true" else False
+        else:
+            self.playback_globally = None
+        if "allow_polyphany" in dic:
+        	self.allow_polyphany = True if dic["allow_polyphany"]=="true" else False
+        else:
+            self.allow_polyphany = None
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
@@ -759,11 +932,25 @@ class SpeakerParameter:
         return d
 
 class SpeakerAlertParameter:
-    def __init__(self, dic):
-        self.show_alert = True if dic["show_alert"]=="true" else False
-        self.show_on_map = True if dic["show_on_map"]=="true" else False
-        self.icon_signal_id = SignalID(dic["icon_signal_id"])
-        self.alert_message = dic["alert_message"]
+    def __init__(self, dic=None):
+        if not dic:
+            dic = {}
+        if "show_alert" in dic:
+            self.show_alert = True if dic["show_alert"]=="true" else False
+        else:
+            self.show_alert = None
+        if "show_on_map" in dic:
+            self.show_on_map = True if dic["show_on_map"]=="true" else False
+        else:
+            self.show_on_map = None
+        if "icon_signal_id" in dic:
+            self.icon_signal_id = SignalID(dic["icon_signal_id"])
+        else:
+            self.icon_signal_id = None
+        if "alert_message" in dic:
+            self.alert_message = dic["alert_message"]
+        else:
+            self.alert_message = None
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
