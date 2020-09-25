@@ -25,13 +25,15 @@ The main class is `Blueprinter` and it has a few useful functions:
 - `bpItem`
 - `bpName`
 - `bpColor`
-- `mapVersion`
 - `entities`
 - `tiles`
 - `icons`
 - `schedules`
+- `mapVersion`
+
 (All of these fields have analogs with descriptions [here](https://wiki.factorio.com/Blueprint_string_format#Blueprint_object))
 
-`modifyBP.py` has some example code of an application using the `Blueprinter` class.
-I prefer to name my input string files with a .fac extension (although any extension is valid).
+`blueprint_example.py` has some example code of an application using the `Blueprinter` class. I named my input string files with a `.fac` extension (although any extension is valid).
+
+
 
