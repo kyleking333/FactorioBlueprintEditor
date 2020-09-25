@@ -1,7 +1,8 @@
 # FactorioBlueprintEditor
 
 ### Dependencies:
-- [zlib](https://www.zlib.net/ )
+- [Python3](https://www.python.org/downloads/)
+- [zlib](https://www.zlib.net/)
 
 ### Tested on Ubuntu 18.04
 
