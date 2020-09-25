@@ -14,13 +14,15 @@ class Blueprinter:
         self.inputCSVFile = inputCSVFile
 
         if inputStrFile is not None:
-            self.openFromStrFile()
+            self.fromStrFile()
         else:
-            self.openFromCSV()
+            self.fromCSV()
 
 
-    def openFromStrFile(self):
-        with open(self.inputStrFile, "r") as f:
+    def fromStrFile(self, inputStrFile=None):
+        if not inputStrFile:
+            inputStrFile = self.inputStrFile
+        with open(inputStrFile, "r") as f:
             txt = f.read()
         
         bpjson = base64.b64decode(txt[1:])
@@ -81,8 +83,7 @@ class Blueprinter:
             for schedule in schedulesJson:
                 self.schedules.append(Schedule(schedule))
         
-    #TODO: eval() returns a list of dicts like a json. We need to parse those like we do it openFromStr() (should make that a helper func and call it both places)
-    def openFromCSV(self, inputCSV=None):
+    def fromCSV(self, inputCSV=None):
         if not inputCSV:
             inputCSV = self.inputCSVFile
 
@@ -91,43 +92,40 @@ class Blueprinter:
             reader = csv.reader(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
             rows = [a for a in reader]
 
+            self.entities=None
+            self.tiles=None
+            self.icons=None
+            self.schedules=None
+
             for i in range(0, len(rows), 2):  # i will always be index of a 'label row'
                 if rows[i][0]=="Entities":
                     entitiesList = rows[i+1]  # list of strings
                     self.entities = []
                     for e in entitiesList:
-                        self.entities.append(eval(e.replace('\n', '').replace('\t', '')))
-                else:
-                    self.entities=None
+                        self.entities.append(Entity(eval(e.replace('\n', '').replace('\t', ''))))
                     
                 if rows[i][0]=="Tiles":
                     tilesList = rows[i+1]  # list of strings
                     self.tiles = []
                     for e in tilesList:
-                        self.tiles.append(eval(e.replace('\n', '').replace('\t', '')))
-                else:
-                    self.tiles=None
+                        self.tiles.append(Tile(eval(e.replace('\n', '').replace('\t', ''))))
 
                 if rows[i][0]=="Icons":
                     iconsList = rows[i+1]  # list of strings
                     self.icons = []
                     for e in iconsList:
-                        self.icons.append(eval(e.replace('\n', '').replace('\t', '')))
-                else:
-                    self.icons=None
+                        self.icons.append(Icon(eval(e.replace('\n', '').replace('\t', ''))))
 
                 if rows[i][0]=="Schedules":
                     schedulesList = rows[i+1]  # list of strings
                     self.schedules = []
                     for e in schedulesList:
-                        self.schedules.append(eval(e.replace('\n', '').replace('\t', '')))
-                else:
-                    self.schedules=None
+                        self.schedules.append(Schedule(eval(e.replace('\n', '').replace('\t', ''))))
 
-    def toCSV(self, outFile=None):
-        if not outFile:
-            outFile = self.outFile
-        with open(outFile, "w", newline='') as csvfile:
+    def toCSV(self, outputCSVFile=None):
+        if not outputCSVFile:
+            outputCSVFile = self.outFile
+        with open(outputCSVFile, "w", newline='') as csvfile:
             # this csv will have quotes around every field
             writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         
@@ -144,35 +142,41 @@ class Blueprinter:
                 writer.writerow(["Schedules"])
                 writer.writerow([Blueprinter.spaceout(e.dict()) for e in self.schedules])
 
-    def toStrFile(self, outFile=None):
-        if not outFile:
-            outFile = self.outFile
+    def toStrFile(self, outputStrFile=None):
+        if not outputStrFile:
+            outputStrFile = self.outFile
 
-        with open(outFile, "w") as f:
-            res = {}
-            res["blueprint"] = {}
+        with open(outputStrFile, "w") as f:
+            f.write(self.__str__())
+
+    def __str__(self):  # prints the factorio string this object would generate
+        res = {}
+        res["blueprint"] = {}
         
-            #write metadata
-            res["blueprint"]["item"] = self.bpItem
-            res["blueprint"]["label"] = self.bpName
-            res["blueprint"]["label_color"] = Blueprinter.toDict(self.bpColor)
-            res["blueprint"]["version"] = self.mapVersion
-            #write data lists 
-            if self.entities:
-                res["blueprint"]["entities"]  = [Blueprinter.toDict(e) for e in self.entities]
-            if self.tiles:
-                res["blueprint"]["tiles"]     = [Blueprinter.toDict(t) for t in self.tiles]
-            if self.icons:
-                res["blueprint"]["icons"]     = [Blueprinter.toDict(i) for i in self.icons]
-            if self.schedules:
-                res["blueprint"]["schedules"] = [Blueprinter.toDict(s) for s in self.schedules]
+        #write metadata
+        res["blueprint"]["item"] = self.bpItem
+        res["blueprint"]["label"] = self.bpName
+        res["blueprint"]["label_color"] = Blueprinter.toDict(self.bpColor)
+        res["blueprint"]["version"] = self.mapVersion
+        #write data lists 
+        if self.entities:
+            res["blueprint"]["entities"]  = [Blueprinter.toDict(e) for e in self.entities]
+        if self.tiles:
+            res["blueprint"]["tiles"]     = [Blueprinter.toDict(t) for t in self.tiles]
+        if self.icons:
+            res["blueprint"]["icons"]     = [Blueprinter.toDict(i) for i in self.icons]
+        if self.schedules:
+            res["blueprint"]["schedules"] = [Blueprinter.toDict(s) for s in self.schedules]
         
-            # convert to json
-            resjson = json.dumps(res)
-            # compress
-            compressed_res = zlib.compress(bytes(resjson, 'utf-8'))
-            #encode base 64
-            f.write("0"+base64.b64encode(compressed_res).decode('utf-8'))
+        # convert to json
+        resjson = json.dumps(res)
+        # compress
+        compressed_res = zlib.compress(bytes(resjson, 'utf-8'))
+        #encode base 64
+        return "0" + base64.b64encode(compressed_res).decode('utf-8')
+
+    def __repr__(self):
+        return self.__str__()
 
     # This can be called on any object
     # if called on a custom object it calls object.dict()
