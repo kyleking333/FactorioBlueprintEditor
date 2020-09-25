@@ -1,5 +1,5 @@
-*.txt
-*.csv
-*.fac
-*.sh
+*
 !exampleBP.fac
+!blueprint_example.py
+!FactorioTypes.py
+!README.md

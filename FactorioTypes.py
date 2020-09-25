@@ -102,25 +102,33 @@ class Blueprinter:
                     entitiesList = rows[i+1]  # list of strings
                     self.entities = []
                     for e in entitiesList:
-                        self.entities.append(Entity(eval(e.replace('\n', '').replace('\t', ''))))
+                        ent = e.replace('\n', '').replace('\t', '')
+                        if ent is not "":
+                            self.entities.append(Entity(eval(ent)))
                     
                 if rows[i][0]=="Tiles":
                     tilesList = rows[i+1]  # list of strings
                     self.tiles = []
                     for e in tilesList:
-                        self.tiles.append(Tile(eval(e.replace('\n', '').replace('\t', ''))))
+                        tile = e.replace('\n', '').replace('\t', '')
+                        if tile is not "":
+                            self.tiles.append(Tile(eval(tile)))
 
                 if rows[i][0]=="Icons":
                     iconsList = rows[i+1]  # list of strings
                     self.icons = []
                     for e in iconsList:
-                        self.icons.append(Icon(eval(e.replace('\n', '').replace('\t', ''))))
+                        icon = e.replace('\n', '').replace('\t', '')
+                        if icon is not "":
+                            self.icons.append(Icon(eval(icon)))
 
                 if rows[i][0]=="Schedules":
                     schedulesList = rows[i+1]  # list of strings
                     self.schedules = []
                     for e in schedulesList:
-                        self.schedules.append(Schedule(eval(e.replace('\n', '').replace('\t', ''))))
+                        schedule = e.replace('\n', '').replace('\t', '')
+                        if schedule is not "":
+                            self.schedules.append(Schedule(eval(schedule)))
 
     def toCSV(self, outputCSVFile=None):
         if not outputCSVFile:
