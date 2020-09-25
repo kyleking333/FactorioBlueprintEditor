@@ -81,8 +81,48 @@ class Blueprinter:
             for schedule in schedulesJson:
                 self.schedules.append(Schedule(schedule))
         
-    def openFromCSV(self):
-        pass
+    #TODO: eval() returns a list of dicts like a json. We need to parse those like we do it openFromStr() (should make that a helper func and call it both places)
+    def openFromCSV(self, inputCSV=None):
+        if not inputCSV:
+            inputCSV = self.inputCSVFile
+
+        with open(inputCSV, "r", newline='') as csvfile:
+            # this csv should have quotes around every field
+            reader = csv.reader(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+            rows = [a for a in reader]
+
+            for i in range(0, len(rows), 2):  # i will always be index of a 'label row'
+                if rows[i][0]=="Entities":
+                    entitiesList = rows[i+1]  # list of strings
+                    self.entities = []
+                    for e in entitiesList:
+                        self.entities.append(eval(e.replace('\n', '').replace('\t', '')))
+                else:
+                    self.entities=None
+                    
+                if rows[i][0]=="Tiles":
+                    tilesList = rows[i+1]  # list of strings
+                    self.tiles = []
+                    for e in tilesList:
+                        self.tiles.append(eval(e.replace('\n', '').replace('\t', '')))
+                else:
+                    self.tiles=None
+
+                if rows[i][0]=="Icons":
+                    iconsList = rows[i+1]  # list of strings
+                    self.icons = []
+                    for e in iconsList:
+                        self.icons.append(eval(e.replace('\n', '').replace('\t', '')))
+                else:
+                    self.icons=None
+
+                if rows[i][0]=="Schedules":
+                    schedulesList = rows[i+1]  # list of strings
+                    self.schedules = []
+                    for e in schedulesList:
+                        self.schedules.append(eval(e.replace('\n', '').replace('\t', '')))
+                else:
+                    self.schedules=None
 
     def toCSV(self, outFile=None):
         if not outFile:
@@ -94,26 +134,15 @@ class Blueprinter:
             if self.entities:
                 writer.writerow(["Entities"])
                 writer.writerow([Blueprinter.spaceout(e.dict()) for e in self.entities])
-                #writer.writerow([a for a in self.entities[0].__dict__])
-                #for e in self.entities:
-                #    writer.writerow([a for a in e.__dict__.values()])
             if self.tiles:
                 writer.writerow(["Tiles"])
-                writer.writerow([a for a in self.tiles[0].__dict__])
-                for t in self.tiles:
-                    writer.writerow([a for a in t.__dict__.values()])
+                writer.writerow([Blueprinter.spaceout(e.dict()) for e in self.tiles])
             if self.icons:
                 writer.writerow(["Icons"])
-                writer.writerow([a for a in self.tiles[0].__dict__])
-                writer.writerow([a for a in self.icons[0].__dict__])
-                for i in self.icons:
-                    writer.writerow([a for a in i.__dict__.values()])
-        
+                writer.writerow([Blueprinter.spaceout(e.dict()) for e in self.icons])
             if self.schedules:
                 writer.writerow(["Schedules"])
-                writer.writerow([a for a in self.schedules[0].__dict__])
-                for s in self.schedules:
-                    writer.writerow([a for a in s.__dict__.values()])
+                writer.writerow([Blueprinter.spaceout(e.dict()) for e in self.schedules])
 
     def toStrFile(self, outFile=None):
         if not outFile:
@@ -130,13 +159,13 @@ class Blueprinter:
             res["blueprint"]["version"] = self.mapVersion
             #write data lists 
             if self.entities:
-               res["blueprint"]["entities"] = [Blueprinter.toDict(e) for e in self.entities]
+                res["blueprint"]["entities"]  = [Blueprinter.toDict(e) for e in self.entities]
             if self.tiles:
-               res["blueprint"]["tiles"] = [Blueprinter.toDict(t) for t in self.tiles]
+                res["blueprint"]["tiles"]     = [Blueprinter.toDict(t) for t in self.tiles]
             if self.icons:
-               res["blueprint"]["icons"] = [Blueprinter.toDict(e) for e in self.icons]
+                res["blueprint"]["icons"]     = [Blueprinter.toDict(i) for i in self.icons]
             if self.schedules:
-                res["blueprint"]["schedules"] = [Blueprinter.toDict(e) for e in self.schedules]
+                res["blueprint"]["schedules"] = [Blueprinter.toDict(s) for s in self.schedules]
         
             # convert to json
             resjson = json.dumps(res)
@@ -156,18 +185,12 @@ class Blueprinter:
             if isinstance(obj, dict):  # object is a dictionary. Let's reconstruct it and call dict() on it's children
                 res = {}
                 for k,v in obj.items():
-                    try:
-                        res[k] = toDict(v)
-                    except:
-                        res[k] = v
+                    res[k] = Blueprinter.toDict(v)
                 return res
             elif isinstance(obj, list) or isinstance(obj, tuple):
                 res = []
                 for v in obj:
-                    try:
-                        res.append(toDict(v))
-                    except:
-                        res.append(v)
+                    res.append(Blueprinter.toDict(v))
                 return res
             else:  # must be a primitive type, leave as is
                 return obj
@@ -250,7 +273,7 @@ class Entity:
         self.position            = Position(dic["position"])
 
         if "direction" in dic:
-            self.direction           = int(dic["direction"])  # TODO: handle uint differently?
+            self.direction           = int(dic["direction"])
         else:
             self.direction           = None
         if "orientation" in dic:
@@ -266,7 +289,7 @@ class Entity:
         else:
             self.control_behaviour   = None
         if "items" in dic:
-            self.items               = int(dic["items"])  # TODO: uint32
+            self.items               = int(dic["items"])
         else:
             self.items               = None
         if "recipe" in dic:
@@ -310,7 +333,7 @@ class Entity:
         else:
             self.filter_mode         = None
         if "override_stack_size" in dic:
-            self.override_stack_size = int(dic["override_stack_size"])  # TODO: uint8
+            self.override_stack_size = int(dic["override_stack_size"])
         else:
             self.override_stack_size = None
         if "drop_position" in dic:
@@ -342,7 +365,7 @@ class Entity:
         else:
             self.auto_launch         = None
         if "variation" in dic:
-            self.variation           = int(dic["variation"])  # TODO: um is it a uint8?
+            self.variation           = int(dic["variation"])
         else:
             self.variation           = None
         if "color" in dic:
@@ -368,7 +391,7 @@ class Entity:
 class Inventory:
     def __init__(self, dic):
         self.filters = [ItemFilter(a) for a in dic["filters"]]
-        self.bar = int(dic["bar"])  # TODO: uint16?
+        self.bar = int(dic["bar"])
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
@@ -414,7 +437,7 @@ class WaitCondition:
     def __init__(self, dic):
         self.type = dic["type"]
         self.compare_type = dic["compare_type"]
-        self.ticks = int(dic["ticks"])  # TODO: uint
+        self.ticks = int(dic["ticks"])
         self.condition = CircuitCondition(dic["condition"])
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"

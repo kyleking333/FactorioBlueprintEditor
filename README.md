@@ -7,6 +7,7 @@
 
 ### ToDo
 - Read CSV in to `Blueprinter` object
+  - Specifically, fix issue that we haven't decoded the raw dict data (similar to JSON) into classes yet.
 
 ## Description
 Factorio Blueprint Editor is a tool to read Factorio Blueprint strings (from a file) into a Python object with can be manipulated and then exported back to a blueprint string (also saved to a file).
@@ -33,3 +34,4 @@ The main class is `Blueprinter` and it has 4 useful functions:
 All of these fields have analogs with descriptions [here](https://wiki.factorio.com/Blueprint_string_format).
 
 `modifyBP.py` has some example code of an application using the `Blueprinter` class.
+I personally have taken to giving my input string files a .fac extension, so `bp3.fac` is a file with a factorio blueprint string in it.
