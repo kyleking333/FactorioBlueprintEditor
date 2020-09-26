@@ -588,8 +588,7 @@ class Position:
             self.y = None
     def __add__(self, other):  # may come in handy
         if isinstance(other, tuple) and len(other)==2:
-            self.x += other[0]
-            self.y += other[1]
+            return Position({"x": self.x + other[0], "y":self.y + other[1]})
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
@@ -601,7 +600,9 @@ class Position:
                 d[attr] = Blueprinter.toDict(val)
         return d
 
-class ControlBehavior:  # not documented properly, here are the subclass' definitions: https://lua-api.factorio.com/latest/Concepts.html#Signal
+class ControlBehavior:  
+    # subclass' definitions: https://lua-api.factorio.com/latest/Concepts.html#Signal
+    # signal naming: https://wiki.factorio.com/Data.raw#constant-combinator
     class ConstantCombinatorParameters:
         def __init__(self, dic=None):
             if not dic:
