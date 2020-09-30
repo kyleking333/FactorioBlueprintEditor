@@ -589,6 +589,15 @@ class Position:
     def __add__(self, other):  # may come in handy
         if isinstance(other, tuple) and len(other)==2:
             return Position({"x": self.x + other[0], "y":self.y + other[1]})
+        elif isinstance(other, Position):
+            return Position({"x": self.x + other.x, "y":self.y + other.y})
+    def __sub__(self, other):  # may come in handy
+        if isinstance(other, tuple) and len(other)==2:
+            return Position({"x": self.x - other[0], "y":self.y - other[1]})
+        elif isinstance(other, Position):
+            return Position({"x": self.x - other.x, "y":self.y - other.y})
+    def __copy__(self):
+        return Position({"x": self.x, "y":self.y})
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
     def __repr__(self):
