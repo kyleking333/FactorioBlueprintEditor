@@ -1,5 +1,5 @@
 import sys
-from FactorioTypes import Blueprinter
+from Blueprinter import Blueprinter
 import numpy
 from pathlib import Path
 
@@ -38,7 +38,7 @@ for i in range(len(names)):
 
 # let's output our data (as a factorio blueprint string and also as an editable csv
 bp.toCSV(outputFolder / "exampleOutputFromStrFile.csv")  # if you want an easy to read csv to view/edit
-bp.toStrFile(outputFolder / "exampleOutputFromStrFile.fac")  # if you want to reimport your blueprint to factorio. I use 'fac' but any extension (like .txt) is file
+bp.toStrFile(outputFolder / "exampleOutputFromStrFile.fbps")  # if you want to reimport your blueprint to factorio. I use 'fbps' but any extension (like .txt) is file
 #print(bp)  # if you want the program to print the string instead of outputting to a file
 
 print("-"*80)
@@ -55,6 +55,6 @@ for i in range(len(names)):
 
 # let's output our data again
 bp.toCSV(outputFolder / "exampleOutputFromCSVFile.csv")
-bp.toStrFile(outputFolder / "exampleOutputFromCSVFile.fac")  # if you want to reimport your blueprint
+bp.toStrFile(outputFolder / "exampleOutputFromCSVFile.fbps")  # if you want to reimport your blueprint
 #print(bp)  # if you want the program to print the string instead of outputting to a file
 

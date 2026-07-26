@@ -34,7 +34,4 @@ The main class is `Blueprinter` and it has a few useful functions:
 
 (All of these fields have analogs with descriptions [here](https://wiki.factorio.com/Blueprint_string_format#Blueprint_object))
 
-`blueprint_example.py` has some example code of an application using the `Blueprinter` class. I named my input string files with a `.fac` extension (although any extension is valid).
-
-
-
+`blueprint_example.py` has some example code of an application using the `Blueprinter` class. I named my input string files with a `.fbps` (factorio blue print string) extension (although any extension is valid).
