@@ -6,7 +6,7 @@ from pathlib import Path
 # Description:
 #   This file is an example file to show the functionality of the Blueprinter class.
 #   Part 1:
-#   It takes an input filename (containing a factorio blueprint string) from the command line,
+#   It takes an input .fbps filename (containing a factorio blueprint string) from the command line,
 #   loads it into a Blueprinter object, prints the entities in it,
 #   saves it as a new factorio string file, and saves it as a csv file.
 #   Part 2:
