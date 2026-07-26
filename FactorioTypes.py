@@ -4,6 +4,8 @@ import json
 import base64
 import zlib
 import csv
+from abc import ABC, abstractmethod
+from typing import List
 
 ##############################
 # Main program functionality #
@@ -20,7 +22,7 @@ class Blueprinter:
         else:
             self.bpItem = "blueprint"
             self.bpName = "blueprint"
-            self.bpColor = Color(r=255,g=255,b=255, a=255)
+            self.bpColor = Color({'r': 1, 'g': 1, 'b': 1, 'a': 1})
             self.mapVersion = None
 
             self.currPosition = Position()
@@ -68,10 +70,10 @@ class Blueprinter:
             self.bpName = "blueprint"
         
         if "label_color" in bpjson["blueprint"]:
-            #bpColor is tuple (r,g,b, a)
-            self.bpColor = Color(dic=bpjson["blueprint"]["label_color"])
+            #bpColor is tuple (r, g, b, a)
+            self.bpColor = Color(bpjson["blueprint"]["label_color"])
         else:
-            self.bpColor = Color(r=255,g=255,b=255, a=255)
+            self.bpColor = Color({'r': 1, 'g': 1, 'b': 1, 'a': 1})
         
         if "version" in bpjson["blueprint"]:
             self.mapVersion = int(bpjson["blueprint"]["version"])
@@ -266,249 +268,35 @@ class Blueprinter:
 #############################
 # Class/Field names correlate with https://wiki.factorio.com/Blueprint_string_format)
 # Notable exceptions include the control_behavior and connection objects.
-
-class Icon:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
-        if "index" in dic:
-            self.index = int(dic["index"])
-        else:
-            self.index = None
-        if "signal" in dic:
-            self.signal = SignalID(dic["signal"])
-        else:
-            self.signal = None
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
-
-class SignalID:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
-        if "name" in dic:
-            self.name = dic["name"]
-        else:
-            self.name = None
-        if "type" in dic:
-            self.type = dic["type"]
-        else:
-            self.type = None
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
-
-
-class Entity:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
-        if "entity_number" in dic:
-            self.entity_number       = int(dic["entity_number"])
-        else:
-            self.entity_number = None
-        if "name" in dic:
-            self.name                = dic["name"]
-        else:
-            self.name =  None
-        if "position" in dic:
-            self.position            = Position(dic["position"])
-        else:
-            self.position = None
-
-        if "direction" in dic:
-            self.direction           = int(dic["direction"])
-        else:
-            self.direction           = None
-        if "orientation" in dic:
-            self.orientation         = float(dic["orientation"])
-        else:
-            self.direction           = None
-        if "connections" in dic:
-            self.connections         = Connection(dic["connections"])
-        else:
-            self.connections         = None
-        if "control_behavior" in dic:
-            self.control_behavior   = ControlBehavior(dic["control_behavior"])
-        else:
-            self.control_behaviour   = None
-        if "items" in dic:
-            self.items               = int(dic["items"])
-        else:
-            self.items               = None
-        if "recipe" in dic:
-            self.recipe              = dic["recipe"]
-        else:
-            self.recipe              = None
-        if "bar" in dic:
-            self.bar                 = int(dic["bar"])
-        else:
-            self.bar                 = None
-        if "inventory" in dic:
-            self.inventory           = Inventory(dic["inventory"])
-        else:
-            self.inventory           = None
-        if "infinity_settings" in dic:
-            self.infinity_settings   = InfinitySettings(dic["infinity_settings"])
-        else:
-            self.infinity_settings   = None
-        if "type" in dic:
-            self.type                = dic["type"]
-        else:
-            self.type                = None
-        if "input_priority" in dic:
-            self.input_priority      = dic["input_priority"]
-        else:
-            self.input_priority      = None
-        if "output_priority" in dic:
-            self.output_priority     = dic["output_priority"]
-        else:
-            self.output_priority     = None
-        if "filter" in dic:
-            self.filter              = dic["filter"]
-        else:
-            self.filter              = None
-        if "filters" in dic:
-            self.filters             = [ItemFilter(a) for a in dic["filters"]]
-        else:
-            self.filters             = None
-        if "filter_mode" in dic:
-            self.filter_mode         = dic["filter_mode"]
-        else:
-            self.filter_mode         = None
-        if "override_stack_size" in dic:
-            self.override_stack_size = int(dic["override_stack_size"])
-        else:
-            self.override_stack_size = None
-        if "drop_position" in dic:
-            self.drop_position       = Position(dic["drop_position"])
-        else:
-            self.drop_position       = None
-        if "pickup_position" in dic:
-            self.pickup_position     = Position(dic["pickup_position"])
-        else:
-            self.pickup_position     = None
-        if "request_filters" in dic:
-            self.request_filters     = LogisticFilter(dic["request_filters"])
-        else:
-            self.request_filters     = None
-        if "request_from_buffers" in dic:
-            self.request_from_buffers= True if dic["request_from_buffers"]=="true" else False
-        else:
-            self.request_from_buffers= None
-        if "parameters" in dic:
-            self.parameters          = SpeakerParameter(dic["parameters"])
-        else:
-            self.parameters          = None
-        if "alert_parameters" in dic:
-            self.alert_parameters    = SpeakerAlertParameter(dic["alert_parameters"])
-        else:
-            self.alert_parameters    = None
-        if "auto_launch" in dic:
-            self.auto_launch         = True if dic["auto_launch"]=="true" else False
-        else:
-            self.auto_launch         = None
-        if "variation" in dic:
-            self.variation           = int(dic["variation"])
-        else:
-            self.variation           = None
-        if "color" in dic:
-            self.color               = Color(dic=dic["color"])
-        else:
-            self.color               = None
-        if "station" in dic:
-            self.station             = dic["station"]
-        else:
-            self.station             = None
-
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
-
-class Inventory:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
-        if "filters" in dic:
-            self.filters = [ItemFilter(a) for a in dic["filters"]]
-        else:
-            self.filters = None
-        if "bar" in dic:
-            self.bar = int(dic["bar"])
-        else:
-            self.bar = None
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
-
-class Schedule:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
-        if "schedule" in dic:
-            self.schedule = [ScheduleRecord(a) for a in dic["schedule"]]
-        else:
-            self.schedule = None
-        if "locomotives" in dic:
-            self.locomotives = [int(trainEntityNumer) for trainEntityNumber in dic["locomotives"]]
-        else:
-            self.locomotives = None
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
+class BlueprintComponent(ABC):
+    @abstractmethod
+    def available_fields(self) -> dict[str, type]:
+        pass
     
-class ScheduleRecord:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
-        if "station" in dic:
-            self.station = dic["station"]
-        else:
-            self.station = None
-        if "wait_conditions" in dic:
-            self.wait_conditions = [WaitCondition(a) for a in dic["wait_conditions"]]
-        else:
-            self.wait_conditions = None
+    def __init__(self, input_dict: Dictionary = None):
+        for k, t in self.available_fields().items():
+            if k in input_dict:
+                if hasattr(t, "get_origin") and t.get_origin() == List.get_origin():
+                    param_type = t.get_args()[0]
+                    if param_type == bool:
+                        setattr(self, k,  [v.lower() == "true" for v in input_dict[k]])
+                    else:
+                        setattr(self, k,  [param_type(v) for v in input_dict[k]])
+                else:
+                    if t == bool:
+                        setattr(self, k,  True if input_dict[k].lower() == "true" else False)
+                    else:
+                        print(f"setting {type(self)}.{k} ({t})")
+                        setattr(self, k,  t(input_dict[k]))
+            else:
+                setattr(self, k, None)
+
     def __str__(self):
         return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
+
     def __repr__(self):
         return self.__str__()
+
     def dict(self):
         d = {}
         for attr,val in self.__dict__.items():
@@ -516,76 +304,96 @@ class ScheduleRecord:
                 d[attr] = Blueprinter.toDict(val)
         return d
 
-class WaitCondition:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
+class Icon(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "index": int,
+            "signal": SignalID,
+        }
 
-        if "type" in dic:
-            self.type = dic["type"]
-        else:
-            self.type = None
-        if "compare_type" in dic:
-            self.compare_type = dic["compare_type"]
-        else:
-            self.compare_type = None
-        if "ticks" in dic:
-            self.ticks = int(dic["ticks"])
-        else:
-            self.ticks = None
-        if "condition" in dic:
-            self.condition = CircuitCondition(dic["condition"])
-        else:
-            self.condition = None
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
+class SignalID(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "name": str,
+            "type": str,
+        }
 
-class Tile:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
-        if "name" in dic:
-        	self.name = dic["name"]
-        else:
-            self.name = None
-        if "position" in dic:
-        	self.position = Position(dic["position"])
-        else:
-            self.position = None
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
+class Entity(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "entity_number": int,
+            "name": str,
+            "position": Position,
+            "direction": int,
+            "orientation": float,
+            "connections": Connection,
+            "control_behavior": ControlBehavior,
+            "items": int,
+            "recipe": str,
+            "bar": int,
+            "inventory": Inventory,
+            "infinity_settings": InfinitySettings,
+            "input_priority": str,
+            "output_priority": str,
+            "filter": str,
+            "filters": list[ItemFilter],
+            "filter_mode": str,
+            "override_stack_size": int,
+            "drop_position": Position,
+            "pickup_position": Position,
+            "request_filters": LogisticFilter,
+            "request_from_buffers": bool,
+            "parameters": SpeakerParameter,
+            "alert_parameters": SpeakerAlertParameter,
+            "auto_launch": bool,
+            "variation": int,
+            "color": Color,
+            "station": str,
+        }
 
+class Inventory(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "filters": ItemFilter,
+            "bar": int,
+        }
 
+class Schedule(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "schedule": list[ScheduleRecord],
+            "locomotives": list[int],
+        }
+    
+class ScheduleRecord(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "station": str,
+            "wait_conditions": WaitCondition(a),
+        }
 
+class WaitCondition(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "type": str,
+            "compare_type": str,
+            "ticks": int,
+            "condition": CircuitCondition,
+        }
 
-class Position:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
-        if "x" in dic:
-            self.x = dic["x"]
-        else:
-            self.x = None
-        if "y" in dic:
-            self.y = dic["y"]
-        else:
-            self.y = None
+class Tile(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "name": str,
+            "position": Position,
+        }
+
+class Position(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "x": int,
+            "y": int,
+        }
     def __add__(self, other):  # may come in handy
         if isinstance(other, tuple) and len(other)==2:
             return Position({"x": self.x + other[0], "y":self.y + other[1]})
@@ -598,394 +406,123 @@ class Position:
             return Position({"x": self.x - other.x, "y":self.y - other.y})
     def __copy__(self):
         return Position({"x": self.x, "y":self.y})
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
 
-class ControlBehavior:  
+class ControlBehavior(BlueprintComponent):  
     # subclass' definitions: https://lua-api.factorio.com/latest/Concepts.html#Signal
     # signal naming: https://wiki.factorio.com/Data.raw#constant-combinator
     class ConstantCombinatorParameters:
-        def __init__(self, dic=None):
-            if not dic:
-                dic = {}
-            if "signal" in dic:
-                self.signal = SignalID(dic["signal"])
-            else:
-                self.signal = None
-            if "count" in dic:
-                self.count = int(dic["count"])
-            else:
-                self.count = None
-            if "index" in dic:
-                self.index = int(dic["index"])
-            else:
-                self.index = None
-        def __str__(self):
-            return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-        def __repr__(self):
-            return self.__str__()
-        def dict(self):
-            d = {}
-            for attr,val in self.__dict__.items():
-                if val is not None:
-                    d[attr] = Blueprinter.toDict(val)
-            return d
-    class DeciderCombinatorParameters:
-        def __init__(self, dic=None):
-            if not dic:
-                dic = {}
-            if "first_signal" in dic:
-                self.first_signal = SignalID(dic["first_signal"])
-            else:
-                self.first_signal = None
-            if "second_signal" in dic:
-                self.second_signal = SignalID(dic["second_signal"])
-            else:
-                self.second_signal = None
-            if "constant" in dic:
-                self.constant = int(dic["constant"])
-            else:
-                self.constant = None
-            if "comparator" in dic:
-                self.comparator = dic["comparator"]
-            else:
-                self.comparator = None
-            if "output_signal" in dic:
-                self.output_signal = SignalID(dic["output_signal"])
-            else:
-                self.output_signal = None
-            if "copy_count_from_input" in dic:
-                self.copy_count_from_input = True if int(dic["copy_count_from_input"])=="true" else False
-            else:
-                self.copy_count_from_input = None
-        def __str__(self):
-            return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-        def __repr__(self):
-            return self.__str__()
-        def dict(self):
-            d = {}
-            for attr,val in self.__dict__.items():
-                if val is not None:
-                    d[attr] = Blueprinter.toDict(val)
-            return d
-    class ArithmeticCombinatorParameters:
-        def __init__(self, dic=None):
-            if not dic:
-                dic = {}
-            if "first_signal" in dic:
-                self.first_signal = SignalID(dic["first_signal"])
-            else:
-                self.first_signal = None
-            if "second_signal" in dic:
-                self.second_signal = SignalID(dic["second_signal"])
-            else:
-                self.second_signal = None
-            if "first_constant" in dic:
-                self.first_constant = int(dic["first_constant"])
-            else:
-                self.first_constant = None
-            if "second_constant" in dic:
-                self.second_constant = int(dic["second_constant"])
-            else:
-                self.second_constant = None
-            if "operation" in dic:
-                self.operation = dic["operation"]
-            else:
-                self.operation = None
-            if "output_signal" in dic:
-                self.output_signal = SignalID(dic["output_signal"])
-            else:
-                self.output_signal = None
-        def __str__(self):
-            return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-        def __repr__(self):
-            return self.__str__()
-        def dict(self):
-            d = {}
-            for attr,val in self.__dict__.items():
-                if val is not None:
-                    d[attr] = Blueprinter.toDict(val)
-            return d
+        def available_fields(self) -> dict[str, type]:
+            return {
+                "signal": SignalID,
+                "count": int,
+                "index": int,
+            }
+    class DeciderCombinatorParameters(BlueprintComponent):
+        def available_fields(self) -> dict[str, type]:
+            return {
+                "first_signal": SignalID,
+                "second_signal": SignalID,
+                "constant": int,
+                "comparator": str,
+                "output_signal": SignalID,
+                "copy_count_from_input": list[bool],
+            }
+    class ArithmeticCombinatorParameters(BlueprintComponent):
+        def available_fields(self) -> dict[str, type]:
+            return {
+                "first_signal": SignalID,
+                "second_signal": SignalID,
+                "first_constant": int,
+                "second_constant": int,
+                "operation": str,
+                "output_signal": SignalID,
+            }
 
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}  # ControlBehavior constructor
-        if "filters" in dic:  # for some reason, this is called filters but it deals with constant combinators
-            self.filters = [self.ConstantCombinatorParameters(a) for a in dic["filters"]]
-        else:
-            self.filters = None
-        if "decider_conditions" in dic:
-            self.decider_conditions = self.DeciderCombinatorParameters(dic["decider_conditions"])
-        else:
-            self.decider_conditions = None
-        if "arithmetic_conditions" in dic:
-            self.arithmetic_conditions = self.ArithmeticCombinatorParameters(dic["arithmetic_conditions"])
-        else:
-            self.arithmetic_conditions = None
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "filters": list[self.ConstantCombinatorParameters],
+            "decider_conditions": list[self.DeciderCombinatorParameters],
+            "arithmetic_conditions": list[self.ArithmeticCombinatorParameters],
+        }
 
-class Connection:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
-        if "1" in dic:
-            self._1 = ConnectionPoint(dic["1"])
-        else:
-            self._1 = None
-        if "2" in dic:
-            self._2 = ConnectionPoint(dic["2"])
-        else:
-            self._2 = None
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr[1:]] = Blueprinter.toDict(val)  # customized due to only _# attributes in this class
-        return d
+class Connection(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "1": ConnectionPoint,
+            "2": ConnectionPoint,
+        }
 
-class ConnectionPoint:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
-        if "red" in dic:
-            self.red   = [ConnectionData(a) for a in dic["red"]]
-        else:
-            self.red = None
-        if "green" in dic:
-            self.green = [ConnectionData(a) for a in dic["green"]]
-        else:
-            self.green = None
+class ConnectionPoint(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "red": ConnectionData,
+            "green": ConnectionData,
+        }
 
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
+class ConnectionData(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "entity_id": int,
+            "circuit_id": int,
+        }
 
-class ConnectionData:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
-        if "entity_id" in dic:
-            self.entity_id   = int(dic["entity_id"])
-        else:
-            self.entity_id = None
-        if "circuit_id" in dic:
-            self.circuit_id  = int(dic["circuit_id"])
-        else:
-            self.circuit_id = None
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
+class ItemFilter(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "name": str,
+            "index": int,
+        }
 
-class ItemFilter:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
-        if "name" in dic:
-        	self.name = dic["name"]
-        else:
-            self.name = None
-        if "index" in dic:
-        	self.index = int(dic["index"])
-        else:
-            self.index = None
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
+class InfinitySettings(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "remove_unfiltered_items": list[bool],
+            "filters": InfinityFilter,
+        }
 
-class InfinitySettings:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
-        if "remove_unfiltered_items" in dic:
-            self.remove_unfiltered_items = True if dic["remove_unfiltered_items"]=="true" else False
-        else:
-            self.remove_unfiltered_items = None
-        if "filters" in dic:
-        	self.filters = [InfinityFilter(a) for a in dic["filters"]]
-        else:
-            self.filters = None
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
+class InfinityFilter(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "name": str,
+            "count": int,
+            "mode": str,
+            "index": int,
+        }
 
-class InfinityFilter:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
-        if "name" in dic:
-            self.name = dic["name"]
-        else:
-            self.name = None
-        if "count" in dic:
-            self.count = int(dic["count"])
-        else:
-            self.count = None
-        if "mode" in dic:
-            self.mode = dic["mode"]
-        else:
-            self.mode = None
-        if "index" in dic:
-            self.index = int(dic["index"])
-        else:
-            self.index = None
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
+class LogisticFilter(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "name": str,
+            "count": int,
+            "index": int,
+        }
 
-class LogisticFilter:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
-        if "name" in dic:
-            self.name = dic["name"]
-        else:
-            self.name = None
-        if "index" in dic:
-            self.index = int(dic["index"])
-        else:
-            self.index = None
-        if "count" in dic:
-            self.count = int(dic["count"])
-        else:
-            self.count = None
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
+class SpeakerParameter(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "playback_volume": float,
+            "playback_globally": bool,
+            "allow_polyphany": bool,
+        }
 
-class SpeakerParameter:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
-        if "playback_volume" in dic:
-        	self.playback_volume = float(dic["playback_volume"])
-        else:
-            self.playback_volume = None
-        if "playback_globally" in dic:
-        	self.playback_globally = True if dic["playback_globally"]=="true" else False
-        else:
-            self.playback_globally = None
-        if "allow_polyphany" in dic:
-        	self.allow_polyphany = True if dic["allow_polyphany"]=="true" else False
-        else:
-            self.allow_polyphany = None
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
+class SpeakerAlertParameter(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "show_alert": bool,
+            "show_on_map": bool,
+            "icon_signal_id": SignalID,
+            "alert_message": str,
+        }
 
-class SpeakerAlertParameter:
-    def __init__(self, dic=None):
-        if not dic:
-            dic = {}
-        if "show_alert" in dic:
-            self.show_alert = True if dic["show_alert"]=="true" else False
-        else:
-            self.show_alert = None
-        if "show_on_map" in dic:
-            self.show_on_map = True if dic["show_on_map"]=="true" else False
-        else:
-            self.show_on_map = None
-        if "icon_signal_id" in dic:
-            self.icon_signal_id = SignalID(dic["icon_signal_id"])
-        else:
-            self.icon_signal_id = None
-        if "alert_message" in dic:
-            self.alert_message = dic["alert_message"]
-        else:
-            self.alert_message = None
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
+class Color(BlueprintComponent):
+    def available_fields(self) -> dict[str, type]:
+        return {
+            "r": float,
+            "g": float,
+            "b": float,
+            "a": float,
+        }
 
-class Color:
-    def __init__(self, dic=None, r=None, g=None, b=None, a=None):
-        if dic:
-            self.r, self.g, self.b, self.a = [int(255*float(i)) for i in dic.values()]
-        else:
-            self.r, self.g, self.b, self.a = r, g, b, a
-    def __str__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([f"{k}={v}" for k,v in self.__dict__.items() if v != None]) + ")"
-    def __repr__(self):
-        return self.__str__()
-    def dict(self):
-        d = {}
-        for attr,val in self.__dict__.items():
-            if val is not None:
-                d[attr] = Blueprinter.toDict(val)
-        return d
+    def as_ints(self):
+        return (int(r * 255), int(g * 255), int(b * 255), int(a * 255))
 

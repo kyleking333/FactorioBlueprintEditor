@@ -1,6 +1,7 @@
 import sys
 from FactorioTypes import Blueprinter
 import numpy
+from pathlib import Path
 
 # Description:
 #   This file is an example file to show the functionality of the Blueprinter class.
@@ -14,6 +15,13 @@ import numpy
 if len(sys.argv) != 2:
     print("Syntax: python3 blueprint_example.py stringfilename")
     exit(0)
+inputFile = Path(sys.argv[1])
+inputFolder = inputFile.parent
+outputFolder = inputFolder / "blueprint_example_output"
+outputFolder.mkdir(exist_ok=True)
+for file_path in outputFolder.iterdir():
+    if file_path.is_file():
+        file_path.unlink()
 
 ### PART 1 ###
 
@@ -29,8 +37,8 @@ for i in range(len(names)):
     print(names[i], counts[i])
 
 # let's output our data (as a factorio blueprint string and also as an editable csv
-bp.toCSV("exampleOutputFromStrFile.csv")  # if you want an easy to read csv to view/edit
-bp.toStrFile("exampleOutputFromStrFile.fac")  # if you want to reimport your blueprint to factorio. I use 'fac' but any extension (like .txt) is file
+bp.toCSV(outputFolder / "exampleOutputFromStrFile.csv")  # if you want an easy to read csv to view/edit
+bp.toStrFile(outputFolder / "exampleOutputFromStrFile.fac")  # if you want to reimport your blueprint to factorio. I use 'fac' but any extension (like .txt) is file
 #print(bp)  # if you want the program to print the string instead of outputting to a file
 
 print("-"*80)
@@ -38,7 +46,7 @@ print("-"*80)
 ### PART 2 ###
 
 # Now read that csv back into Blueprinter (maybe you edited it between the .toCSV() call and now)
-bp.fromCSV("exampleOutputFromStrFile.csv")
+bp.fromCSV(outputFolder / "exampleOutputFromStrFile.csv")
 
 # Let's see if entities went through any changes
 names, counts = numpy.unique([a.name for a in bp.entities], return_counts=True)
@@ -46,7 +54,7 @@ for i in range(len(names)):
     print(names[i], counts[i])
 
 # let's output our data again
-bp.toCSV("exampleOutputFromCSVFile.csv")
-bp.toStrFile("exampleOutputFromCSVFile.fac")  # if you want to reimport your blueprint
+bp.toCSV(outputFolder / "exampleOutputFromCSVFile.csv")
+bp.toStrFile(outputFolder / "exampleOutputFromCSVFile.fac")  # if you want to reimport your blueprint
 #print(bp)  # if you want the program to print the string instead of outputting to a file
 
